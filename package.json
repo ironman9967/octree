@@ -1,0 +1,11 @@
+{
+    "name": "octree",
+    "version": "0.0.0",
+    "description": "A 3D spatial management system",
+    "main": "octree.js",
+    "author": "Tyson Hester",
+    "license": "ISC",
+    "dependencies": {
+        "lodash":"*"
+    }
+}

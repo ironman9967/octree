@@ -6,8 +6,8 @@ var Point = require('../Point');
 function Box(center, width, height, depth) {
     if (!this instanceof Box) return new Box(center, width, height, depth);
     this.Center = center;
-    this.Height = height;
     this.Width = width;
+    this.Height = height;
     this.Depth = depth;
 
     this.Corners = [];

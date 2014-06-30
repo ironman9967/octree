@@ -2,6 +2,7 @@
 var util = require('util');
 
 var _ = require('lodash');
+var wid = require('wid');
 
 var Eventer = require('../Helpers/Eventer');
 
@@ -9,6 +10,8 @@ function OctreeValue(value, boundingBox) {
     if (!this instanceof OctreeValue) return new OctreeValue(value, boundingBox);
     Eventer.call(this);
     this._eventer = Eventer.prototype;
+
+    this.id = _.isUndefined(value.id) ? wid.NewWID() : value.id;
 
     this.Leaf = void 0;
     this.Value = value;

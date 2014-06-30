@@ -1,4 +1,6 @@
 
+var wid = require('wid');
+
 exports.geometry = {
     point: require('./Geometry/Point'),
     shapes: {
@@ -11,7 +13,8 @@ exports.helpers = {
 };
 
 exports.value = require('./Octree/OctreeValue');
+exports.leaf = require('./Octree/OctreeLeaf');
 
 exports.createTree = function (minLeafSize, valuesPerLeaf) {
-    return new (require('./Octree/Octree'))(minLeafSize, valuesPerLeaf);
+    return new (require('./Octree/Octree'))(wid.NewWID(10), minLeafSize, valuesPerLeaf);
 };

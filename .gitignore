@@ -6,3 +6,5 @@ Octree.iws
 node_modules/
 
 test.js
+
+*.ini

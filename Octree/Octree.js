@@ -6,6 +6,7 @@ var wid = require('wid');
 
 var Eventer = require('../Helpers/Eventer');
 
+var Point = require('../Geometry/Point');
 var Box = require('../Geometry/Shapes/Box');
 
 var OctreeLeaf = require('./OctreeLeaf');
@@ -50,33 +51,56 @@ Octree.prototype._getLeafBoundingBoxes = function (callback) {
 };
 
 Octree.prototype._insertValue = function (value, callback) {
+    this._idValue(value);
+    if (_.isUndefined(this._root)) {
+        var instance = this;
+        this._createRoot(new Point(0, 0, 0), this._minLeafSize, this._minLeafSize, this._minLeafSize, function () {
+            instance.emit('rootInitialized');
+            instance._root.emit('insertValue', value, callback);
+        });
+    }
+    else {
+        this._root.emit('insertValue', value, callback);
+    }
+};
+
+Octree.prototype._idValue = function (value) {
+    if (!_.isUndefined(value.Value.ID)) {
+        value.id = value.Value.ID;
+    }
+    if (!_.isUndefined(value.Value.Id)) {
+        value.id = value.Value.Id;
+    }
+    if (!_.isUndefined(value.Value.id)) {
+        value.id = value.Value.id;
+    }
+    if (!_.isUndefined(value.Value._id)) {
+        value.id = value.Value._id;
+    }
     if (_.isUndefined(value.id)) {
         value.id = wid.NewWID();
     }
-    if (_.isUndefined(this._root)) {
-        this._root = new OctreeLeaf(wid.NewWID(10), this._minLeafSize, this._maxValuesPerLeaf);
-        this._root.BoundingBox = new Box(value.BoundingBox.Center, this._minLeafSize, this._minLeafSize,
-            this._minLeafSize);
-        this.emit('newRoot', this._root);
-        this.emit('rootInitialized');
-    }
-    this._root.emit('insertValue', value, callback);
 };
 
 Octree.prototype._query = function () {
-    this._root.emit.apply(this._root, ([ 'query' ]).concat(_.toArray(arguments)));
+    if (!_.isUndefined(this._root)) {
+        this._root.emit.apply(this._root, ([ 'query' ]).concat(_.toArray(arguments)));
+    }
 };
 
-Octree.prototype._grow = function (value) {
-    var xMin = this.root.BoundingBox[3].x;
-    //var xMax = this.root.BoundingBox[4].x;
-    var yMin = this.root.BoundingBox[3].y;
-    //var yMax = this.root.BoundingBox[4].y;
-    var zMin = this.root.BoundingBox[3].z;
-    //var zMax = this.root.BoundingBox[4].z;
-    var growX = value.BoundingBox.Center.x > xMin;
-    var growY = value.BoundingBox.Center.y > yMin;
-    var growZ = value.BoundingBox.Center.z > zMin;
+Octree.prototype._grow = function (value, callback) {
+    var xMin = this._root.BoundingBox.Corners[3].X;
+    //var xMax = this._root.BoundingBox.Corners[4].X;
+    var yMin = this._root.BoundingBox.Corners[3].Y;
+    //var yMax = this._root.BoundingBox.Corners[4].Y;
+    var zMin = this._root.BoundingBox.Corners[3].Z;
+    //var zMax = this._root.BoundingBox.Corners[4].Z;
+//    var growX = this._root.BoundingBox.Center.X > xMin;
+//    var growY = this._root.BoundingBox.Center.Y > yMin;
+//    var growZ = this._root.BoundingBox.Center.Z > zMin;
+    var growX = value.BoundingBox.Center.X > xMin;
+    var growY = value.BoundingBox.Center.Y > yMin;
+    var growZ = value.BoundingBox.Center.Z > zMin;
     var cornerIndex = -1;
     if (!growX && growY && growZ) {
         cornerIndex = 0;
@@ -102,8 +126,34 @@ Octree.prototype._grow = function (value) {
     else if (growX && !growY && !growZ) {
         cornerIndex = 7;
     }
-    var newRootBox = new Box(this._root.BoundingBox[cornerIndex], this._root.BoundingBox.Width * 2,
-            this._root.BoundingBox.Height * 2, this._root.BoundingBox.Depth * 2);
+    var instance = this;
+    this._createRoot(this._root.BoundingBox.Corners[cornerIndex],
+        this._root.BoundingBox.Width * 2, this._root.BoundingBox.Height * 2, this._root.BoundingBox.Depth * 2,
+        function () {
+            instance.emit('insertValue', value, callback);
+        });
+};
+
+Octree.prototype._createRoot = function (center, width, heigth, depth, callback) {
+    var id;
+    if (_.isUndefined(this._root)) {
+        id = wid.NewWID(10);
+    }
+    else {
+        id = this._root.id;
+    }
+    var root = new OctreeLeaf(id, void 0, void 0, this._minLeafSize, this._maxValuesPerLeaf);
+    root.Root = root;
+    root.BoundingBox = new Box(center, width, heigth, depth);
+    if (!_.isUndefined(this._root)) {
+        var removedValues = this._root.PopValues();
+        _.each(removedValues, function (v) {
+            root.emit('insertValue', v);
+        });
+    }
+    this._root = root;
+    this.emit('newRoot', this._root);
+    callback();
 };
 
 Octree.prototype._dispose = function () {

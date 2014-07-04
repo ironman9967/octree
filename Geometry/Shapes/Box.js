@@ -15,41 +15,41 @@ function Box(center, width, height, depth) {
 }
 
 Box.prototype._createCorners = function() {
-    this._halfHeight = this.Height / 2;
-    this._halfWidth = this.Width / 2;
-    this._halfDepth = this.Depth / 2;
+    this.HalfHeight = this.Height / 2;
+    this.HalfWidth = this.Width / 2;
+    this.HalfDepth = this.Depth / 2;
     this.Corners.push(new Point(
-        this.Center.X - this._halfWidth,
-        this.Center.Y + this._halfHeight,
-        this.Center.Z + this._halfDepth));
+        this.Center.X - this.HalfWidth,
+        this.Center.Y + this.HalfHeight,
+        this.Center.Z + this.HalfDepth));
     this.Corners.push(new Point(
-        this.Center.X - this._halfWidth,
-        this.Center.Y + this._halfHeight,
-        this.Center.Z - this._halfDepth));
+        this.Center.X - this.HalfWidth,
+        this.Center.Y + this.HalfHeight,
+        this.Center.Z - this.HalfDepth));
     this.Corners.push(new Point(
-        this.Center.X - this._halfWidth,
-        this.Center.Y - this._halfHeight,
-        this.Center.Z + this._halfDepth));
+        this.Center.X - this.HalfWidth,
+        this.Center.Y - this.HalfHeight,
+        this.Center.Z + this.HalfDepth));
     this.Corners.push(new Point(
-        this.Center.X - this._halfWidth,
-        this.Center.Y - this._halfHeight,
-        this.Center.Z - this._halfDepth));
+        this.Center.X - this.HalfWidth,
+        this.Center.Y - this.HalfHeight,
+        this.Center.Z - this.HalfDepth));
     this.Corners.push(new Point(
-        this.Center.X + this._halfWidth,
-        this.Center.Y + this._halfHeight,
-        this.Center.Z + this._halfDepth));
+        this.Center.X + this.HalfWidth,
+        this.Center.Y + this.HalfHeight,
+        this.Center.Z + this.HalfDepth));
     this.Corners.push(new Point(
-        this.Center.X + this._halfWidth,
-        this.Center.Y + this._halfHeight,
-        this.Center.Z - this._halfDepth));
+        this.Center.X + this.HalfWidth,
+        this.Center.Y + this.HalfHeight,
+        this.Center.Z - this.HalfDepth));
     this.Corners.push(new Point(
-        this.Center.X + this._halfWidth,
-        this.Center.Y - this._halfHeight,
-        this.Center.Z + this._halfDepth));
+        this.Center.X + this.HalfWidth,
+        this.Center.Y - this.HalfHeight,
+        this.Center.Z + this.HalfDepth));
     this.Corners.push(new Point(
-        this.Center.X + this._halfWidth,
-        this.Center.Y - this._halfHeight,
-        this.Center.Z - this._halfDepth));
+        this.Center.X + this.HalfWidth,
+        this.Center.Y - this.HalfHeight,
+        this.Center.Z - this.HalfDepth));
 };
 
 Box.prototype.ToString = function () {

@@ -9,7 +9,8 @@ exports.geometry = {
 };
 
 exports.helpers = {
-    eventer: require('./Helpers/Eventer')
+    eventer: require('./Helpers/Eventer'),
+    ip: require('./Helpers/IpHelper')
 };
 
 exports.value = require('./Octree/OctreeValue');

@@ -52,7 +52,7 @@ Box.prototype._createCorners = function() {
         this.Center.Z - this.HalfDepth));
 };
 
-Box.prototype.ToString = function () {
+Box.prototype.toString = function () {
     var s = "box(";
     var instance = this;
     _.each(this.Corners, function (c) {
@@ -63,9 +63,12 @@ Box.prototype.ToString = function () {
 };
 
 Box.prototype.ContainsPoint = function (point) {
-    return point.X > this.Corners[0].X && point.X <= this.Corners[4].X
-        && point.Y <= this.Corners[0].Y && point.Y > this.Corners[2].Y
-        && point.Z <= this.Corners[0].Z && point.Z > this.Corners[1].Z;
+    var max = this.Corners[4];
+    var min = this.Corners[3];
+    var inX = max.X >= point.X && point.X > min.X;
+    var inY = max.Y >= point.Y && point.Y > min.Y;
+    var inZ = max.Z >= point.Z && point.Z > min.Z;
+    return inX && inY && inZ;
 };
 
 Box.prototype.ContainsBox = function (box) {

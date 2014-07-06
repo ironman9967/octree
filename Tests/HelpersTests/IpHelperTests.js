@@ -1,7 +1,7 @@
 
 var _ = require('lodash');
 
-var IpHelper = require('../Helpers/IpHelper');
+var IpHelper = require('../../Helpers/IpHelper');
 
 module.exports = {
     setUp: function (done) {

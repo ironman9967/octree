@@ -80,4 +80,8 @@ Box.prototype.ContainsBox = function (box) {
     return success;
 };
 
+Box.prototype.Clone = function () {
+    return new Box(this.Center.Clone(), this.width, this.height, this.depth);
+};
+
 module.exports = Box;

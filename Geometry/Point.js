@@ -8,7 +8,11 @@ function Point(x, y, z) {
 }
 
 Point.prototype.toString = function () {
-    return "(" + this.X + ":" + this.Y + ":" + this.Z + ")";
+    return "(" + this.X.toString() + ":" + this.Y.toString() + ":" + this.Z.toString() + ")";
+};
+
+Point.prototype.Clone = function () {
+    return Point(this.X, this.Y, this.Z);
 };
 
 Point.Distance = function (p1, p2) {

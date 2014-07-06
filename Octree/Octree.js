@@ -47,7 +47,7 @@ Octree.prototype._newRoot = function (leaf) {
 };
 
 Octree.prototype._getLeafBoundingBoxes = function (callback) {
-    callback(([ this._root.BoundingBox ]).concat(this._root.GetLeafBoundingBoxes()));
+    callback(this._root.GetLeafBoundingBoxes());
 };
 
 Octree.prototype._insertValue = function (value, callback) {
@@ -90,14 +90,8 @@ Octree.prototype._query = function () {
 
 Octree.prototype._grow = function (value, callback) {
     var xMin = this._root.BoundingBox.Corners[3].X;
-    //var xMax = this._root.BoundingBox.Corners[4].X;
     var yMin = this._root.BoundingBox.Corners[3].Y;
-    //var yMax = this._root.BoundingBox.Corners[4].Y;
     var zMin = this._root.BoundingBox.Corners[3].Z;
-    //var zMax = this._root.BoundingBox.Corners[4].Z;
-//    var growX = this._root.BoundingBox.Center.X > xMin;
-//    var growY = this._root.BoundingBox.Center.Y > yMin;
-//    var growZ = this._root.BoundingBox.Center.Z > zMin;
     var growX = value.BoundingBox.Center.X > xMin;
     var growY = value.BoundingBox.Center.Y > yMin;
     var growZ = value.BoundingBox.Center.Z > zMin;

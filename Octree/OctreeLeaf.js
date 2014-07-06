@@ -33,6 +33,8 @@ OctreeLeaf.prototype._setupEvents = function () {
     this.Listen('insertValue');
     this.Listen('query');
     this.Listen('split');
+    this.Listen('attemptMerge');
+    this.Listen('attemptShrink');
 };
 
 OctreeLeaf.prototype.GetLeafBoundingBoxes = function (allLeaves) {
@@ -45,6 +47,7 @@ OctreeLeaf.prototype.GetLeafBoundingBoxes = function (allLeaves) {
     });
     return allLeaves;
 };
+
 OctreeLeaf.prototype.PopValues = function () {
     var removedValues = [];
     while (this.Values.length > 0) {
@@ -65,6 +68,66 @@ OctreeLeaf.prototype.IsRoot = function () {
     return _.isUndefined(this.Parent);
 };
 
+OctreeLeaf.SplitBox = function (box) {
+    var segments = [];
+    for (var i = 0; i < 8; i++) {
+        var centerX = box.Center.X;
+        var centerY = box.Center.Y;
+        var centerZ = box.Center.Z;
+        switch (i) {
+            case 0:
+                centerX -= box.HalfWidth / 2;
+                centerY += box.HalfHeight / 2;
+                centerZ += box.HalfDepth / 2;
+                break;
+            case 1:
+                centerX -= box.HalfWidth / 2;
+                centerY += box.HalfHeight / 2;
+                centerZ -= box.HalfDepth / 2;
+                break;
+            case 2:
+                centerX -= box.HalfWidth / 2;
+                centerY -= box.HalfHeight / 2;
+                centerZ += box.HalfDepth / 2;
+                break;
+            case 3:
+                centerX -= box.HalfWidth / 2;
+                centerY -= box.HalfHeight / 2;
+                centerZ -= box.HalfDepth / 2;
+                break;
+            case 4:
+                centerX += box.HalfWidth / 2;
+                centerY += box.HalfHeight / 2;
+                centerZ += box.HalfDepth / 2;
+                break;
+            case 5:
+                centerX += box.HalfWidth / 2;
+                centerY += box.HalfHeight / 2;
+                centerZ -= box.HalfDepth / 2;
+                break;
+            case 6:
+                centerX += box.HalfWidth / 2;
+                centerY -= box.HalfHeight / 2;
+                centerZ += box.HalfDepth / 2;
+                break;
+            case 7:
+                centerX += box.HalfWidth / 2;
+                centerY -= box.HalfHeight / 2;
+                centerZ -= box.HalfDepth / 2;
+                break;
+        }
+        segments[i] = new Box(new Point(centerX, centerY, centerZ), box.HalfWidth, box.HalfHeight, box.HalfDepth);
+    }
+    return segments;
+};
+
+OctreeLeaf.GetSegmentContainingPoint = function (box, point) {
+    var segments = OctreeLeaf.SplitBox(box);
+    return _.find(segments, function (segment) {
+        return segment.ContainsPoint(point);
+    });
+};
+
 OctreeLeaf.prototype._insertValue = function (value, callback) {
     var containsPoint = this.BoundingBox.ContainsPoint(value.BoundingBox.Center);
     var lessThanMax = this.Values.length < this._maxValuesPerLeaf;
@@ -72,12 +135,15 @@ OctreeLeaf.prototype._insertValue = function (value, callback) {
         this.BoundingBox.Width === this._minLeafSize
         || this.BoundingBox.Height === this._minLeafSize
         || this.BoundingBox.Depth === this._minLeafSize;
-    if (!containsPoint && _.isUndefined(this.Parent)) {
+    if (!containsPoint && this.IsRoot()) {
         this.emit('grow', value, callback);
     }
     else if (this.Children.length === 0 && (lessThanMax || alreadyMinSize)) {
         this.Values.push(value);
         value.Leaf = this;
+        if (this.Values.length <= this._maxValuesPerLeaf && !alreadyMinSize) {
+            this.emit('attemptMerge');
+        }
         if (!_.isUndefined(callback)) {
             callback(value);
         }
@@ -99,62 +165,56 @@ OctreeLeaf.prototype._insertValue = function (value, callback) {
     }
 };
 
-OctreeLeaf.prototype._split = function (callback) {
-    for (var i = 0; i < 8; i++) {
-        var child = new OctreeLeaf(wid.NewWID(), this.Root, this, this._minLeafSize, this._maxValuesPerLeaf);
-        var centerX = this.BoundingBox.Center.X;
-        var centerY = this.BoundingBox.Center.Y;
-        var centerZ = this.BoundingBox.Center.Z;
-        switch (i) {
-            case 0:
-                centerX -= this.BoundingBox.HalfWidth;
-                centerY += this.BoundingBox.HalfHeight;
-                centerZ += this.BoundingBox.HalfDepth;
-                break;
-            case 1:
-                centerX -= this.BoundingBox.HalfWidth;
-                centerY += this.BoundingBox.HalfHeight;
-                centerZ -= this.BoundingBox.HalfDepth;
-                break;
-            case 2:
-                centerX -= this.BoundingBox.HalfWidth;
-                centerY -= this.BoundingBox.HalfHeight;
-                centerZ += this.BoundingBox.HalfDepth;
-                break;
-            case 3:
-                centerX -= this.BoundingBox.HalfWidth;
-                centerY -= this.BoundingBox.HalfHeight;
-                centerZ -= this.BoundingBox.HalfDepth;
-                break;
-            case 4:
-                centerX += this.BoundingBox.HalfWidth;
-                centerY += this.BoundingBox.HalfHeight;
-                centerZ += this.BoundingBox.HalfDepth;
-                break;
-            case 5:
-                centerX += this.BoundingBox.HalfWidth;
-                centerY += this.BoundingBox.HalfHeight;
-                centerZ -= this.BoundingBox.HalfDepth;
-                break;
-            case 6:
-                centerX += this.BoundingBox.HalfWidth;
-                centerY -= this.BoundingBox.HalfHeight;
-                centerZ += this.BoundingBox.HalfDepth;
-                break;
-            case 7:
-                centerX += this.BoundingBox.HalfWidth;
-                centerY -= this.BoundingBox.HalfHeight;
-                centerZ -= this.BoundingBox.HalfDepth;
-                break;
+OctreeLeaf.prototype._attemptMerge = function () {
+    var childValues = []; //TODO: get values in children
+    if (childValues.length + this.Values.length <= this._maxValuesPerLeaf) {
+        _.each(this.Children, function (child) {
+            child.emit('dispose');
+        });
+        this.Children = [];
+        var numInserted = 0;
+        var instance = this;
+        _.each(childValues, function (value) {
+            numInserted++;
+            instance.emit('insertValue', value, function () {
+                if (numInserted === childValues.length) {
+                    instance.emit('attemptShrink');
+                }
+            });
+        });
+        if (childValues.length === 0 && this.IsRoot()) {
+            instance.emit('attemptShrink');
         }
-        child.BoundingBox = new Box(new Point(centerX, centerY, centerZ),
-                this.BoundingBox.HalfWidth, this.BoundingBox.HalfHeight, this.BoundingBox.HalfDepth);
-        this.Children.push(child);
     }
+    else if (this.IsRoot()) {
+        this.emit('attemptShrink');
+    }
+};
+
+OctreeLeaf.prototype._attemptShrink = function () {
+    var segments = OctreeLeaf.SplitBox(this.BoundingBox);
+    var instance = this;
+    var newRoot = _.find(segments, function (segment) {
+        return _.every(instance.Values, function (value) {
+            return segment.ContainsPoint(value.BoundingBox.Center);
+        });
+    });
+    if (!_.isUndefined(newRoot)) {
+        this.BoundingBox = newRoot;
+    }
+};
+
+OctreeLeaf.prototype._split = function (callback) {
+    var instance = this;
+    _.each(OctreeLeaf.SplitBox(this.BoundingBox), function (box) {
+        var child = new OctreeLeaf(wid.NewWID(), instance.Root, instance, instance._minLeafSize,
+            instance._maxValuesPerLeaf);
+        child.BoundingBox = box;
+        instance.Children.push(child);
+    });
 
     var insertedCount = 0;
     var removedValues = this.PopValues();
-    var instance = this;
     _.each(removedValues, function (value) {
         instance.emit('insertValue', value, function () {
             insertedCount++;

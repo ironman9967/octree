@@ -37,17 +37,6 @@ OctreeLeaf.prototype._setupEvents = function () {
     this.Listen('attemptShrink');
 };
 
-OctreeLeaf.prototype.GetLeafBoundingBoxes = function (allLeaves) {
-    allLeaves = _.isUndefined(allLeaves) ? [ this.BoundingBox ] : allLeaves;
-    _.each(this.Children, function (leaf) {
-        allLeaves.push(leaf.BoundingBox);
-        _.each(leaf.GetLeafBoundingBoxes(allLeaves), function (leafbox) {
-            allLeaves.push(leafbox);
-        });
-    });
-    return allLeaves;
-};
-
 OctreeLeaf.prototype.PopValues = function () {
     var removedValues = [];
     while (this.Values.length > 0) {
@@ -166,14 +155,15 @@ OctreeLeaf.prototype._insertValue = function (value, callback) {
 };
 
 OctreeLeaf.prototype._attemptMerge = function () {
-    var childValues = []; //TODO: get values in children
+    var childValues = this.PopValues();
     if (childValues.length + this.Values.length <= this._maxValuesPerLeaf) {
+        var instance = this;
         _.each(this.Children, function (child) {
+            instance.emit('leafRemoved', child);
             child.emit('dispose');
         });
         this.Children = [];
         var numInserted = 0;
-        var instance = this;
         _.each(childValues, function (value) {
             numInserted++;
             instance.emit('insertValue', value, function () {
@@ -191,25 +181,13 @@ OctreeLeaf.prototype._attemptMerge = function () {
     }
 };
 
-OctreeLeaf.prototype._attemptShrink = function () {
-    var segments = OctreeLeaf.SplitBox(this.BoundingBox);
-    var instance = this;
-    var newRoot = _.find(segments, function (segment) {
-        return _.every(instance.Values, function (value) {
-            return segment.ContainsPoint(value.BoundingBox.Center);
-        });
-    });
-    if (!_.isUndefined(newRoot)) {
-        this.BoundingBox = newRoot;
-    }
-};
-
 OctreeLeaf.prototype._split = function (callback) {
     var instance = this;
     _.each(OctreeLeaf.SplitBox(this.BoundingBox), function (box) {
         var child = new OctreeLeaf(wid.NewWID(), instance.Root, instance, instance._minLeafSize,
             instance._maxValuesPerLeaf);
         child.BoundingBox = box;
+        instance.emit('leafAdded', child);
         instance.Children.push(child);
     });
 

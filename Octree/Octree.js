@@ -34,7 +34,7 @@ Octree.DefaultMaxValuesPerLeaf = 1;
 Octree.prototype._setupEvents = function () {
     this._eventer._setupEvents.apply(this, arguments);
     this.Listen('newRoot');
-    this.Listen('getLeafBoundingBoxes');
+    this.Listen('setRoot');
     this.Listen('query');
     this.Listen('insertValue');
 };
@@ -43,10 +43,7 @@ Octree.prototype._newRoot = function (leaf) {
     this._root = leaf;
 
     this.ListenToAnother('grow', this._root);
-};
-
-Octree.prototype._getLeafBoundingBoxes = function (callback) {
-    callback(this._root.GetLeafBoundingBoxes());
+    this.ListenToAnother('attemptShrink', this._root);
 };
 
 Octree.prototype._insertValue = function (value, callback) {
@@ -113,6 +110,19 @@ Octree.prototype._grow = function (value, callback) {
         });
 };
 
+Octree.prototype._attemptShrink = function () {
+    var segments = OctreeLeaf.SplitBox(this._root.BoundingBox);
+    var instance = this;
+    var newRoot = _.find(segments, function (segment) {
+        return _.every(instance._root.Values, function (value) {
+            return segment.ContainsPoint(value.BoundingBox.Center);
+        });
+    });
+    if (!_.isUndefined(newRoot)) {
+        this.emit('setRoot', newRoot);
+    }
+};
+
 Octree.prototype._createRoot = function (center, width, heigth, depth, callback) {
     var id;
     if (_.isUndefined(this._root)) {
@@ -130,9 +140,15 @@ Octree.prototype._createRoot = function (center, width, heigth, depth, callback)
             root.emit('insertValue', v);
         });
     }
+    this.emit('setRoot', root, callback);
+};
+
+Octree.prototype._setRoot = function (root, callback) {
     this._root = root;
     this.emit('newRoot', this._root);
-    callback();
+    if (!_.isUndefined(callback)) {
+        callback();
+    }
 };
 
 Octree.prototype._dispose = function () {

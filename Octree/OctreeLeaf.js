@@ -159,7 +159,7 @@ OctreeLeaf.prototype._attemptMerge = function () {
     if (childValues.length + this.Values.length <= this._maxValuesPerLeaf) {
         var instance = this;
         _.each(this.Children, function (child) {
-            instance.emit('leafRemoved', child);
+            instance.emit('leafRemoved', child.id);
             child.emit('dispose');
         });
         this.Children = [];

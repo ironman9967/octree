@@ -188,6 +188,8 @@ OctreeLeaf.prototype._split = function (callback) {
             instance._maxValuesPerLeaf);
         child.BoundingBox = box;
         instance.emit('leafAdded', child);
+        instance.Reemit('leafAdded', child);
+        instance.Reemit('leafRemoved', child);
         instance.Children.push(child);
     });
 

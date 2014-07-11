@@ -10,7 +10,12 @@ exports.geometry = {
 
 exports.helpers = {
     eventer: require('./Helpers/Eventer'),
-    ip: require('./Helpers/IpHelper')
+    ip: require('./Helpers/IpHelper'),
+    wid: {
+        create: function () {
+            return wid.NewWID(10);
+        }
+    }
 };
 
 exports.value = require('./Octree/OctreeValue');

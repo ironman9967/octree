@@ -41,7 +41,6 @@ Octree.prototype._setupEvents = function () {
 
 Octree.prototype._newRoot = function (leaf) {
     this._root = leaf;
-    this.Reemit('valueInserted', this._root);
 
     this.ListenToAnother('grow', this._root);
 };
@@ -51,34 +50,20 @@ Octree.prototype._getLeafBoundingBoxes = function (callback) {
 };
 
 Octree.prototype._insertValue = function (value, callback) {
-    this._idValue(value);
     if (_.isUndefined(this._root)) {
         var instance = this;
         this._createRoot(new Point(0, 0, 0), this._minLeafSize, this._minLeafSize, this._minLeafSize, function () {
             instance.emit('rootInitialized');
-            instance._root.emit('insertValue', value, callback);
+            instance._root.emit('insertValue', value, function () {
+                instance.emit('valueInserted', value);
+                if (!_.isUndefined(callback)) {
+                    callback();
+                }
+            });
         });
     }
     else {
         this._root.emit('insertValue', value, callback);
-    }
-};
-
-Octree.prototype._idValue = function (value) {
-    if (!_.isUndefined(value.Value.ID)) {
-        value.id = value.Value.ID;
-    }
-    if (!_.isUndefined(value.Value.Id)) {
-        value.id = value.Value.Id;
-    }
-    if (!_.isUndefined(value.Value.id)) {
-        value.id = value.Value.id;
-    }
-    if (!_.isUndefined(value.Value._id)) {
-        value.id = value.Value._id;
-    }
-    if (_.isUndefined(value.id)) {
-        value.id = wid.NewWID();
     }
 };
 

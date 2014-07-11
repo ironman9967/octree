@@ -40,7 +40,7 @@ OctreeLeaf.prototype._setupEvents = function () {
 OctreeLeaf.prototype.GetLeafBoundingBoxes = function (allLeaves) {
     allLeaves = _.isUndefined(allLeaves) ? [ this.BoundingBox ] : allLeaves;
     _.each(this.Children, function (leaf) {
-        allLeaves.push(leaf);
+        allLeaves.push(leaf.BoundingBox);
         _.each(leaf.GetLeafBoundingBoxes(allLeaves), function (leafbox) {
             allLeaves.push(leafbox);
         });
@@ -141,7 +141,7 @@ OctreeLeaf.prototype._insertValue = function (value, callback) {
     else if (this.Children.length === 0 && (lessThanMax || alreadyMinSize)) {
         this.Values.push(value);
         value.Leaf = this;
-        if (this.Values.length <= this._maxValuesPerLeaf && !alreadyMinSize) {
+        if (this.Values.length <= this._maxValuesPerLeaf && this.Children.length > 0 && !alreadyMinSize) {
             this.emit('attemptMerge');
         }
         if (!_.isUndefined(callback)) {

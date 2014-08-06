@@ -190,7 +190,9 @@ OctreeLeaf.prototype._split = function (callback) {
         instance.emit('leafAdded', child);
         instance.Reemit('leafAdded', child);
         instance.Reemit('leafRemoved', child);
+        instance.Reemit('valueInserted', child);
         instance.Children.push(child);
+        instance.emit('leafAdded', child);
     });
 
     var insertedCount = 0;

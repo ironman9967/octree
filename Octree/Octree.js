@@ -49,8 +49,8 @@ Octree.prototype._newRoot = function (leaf) {
 };
 
 Octree.prototype._insertValue = function (value, callback) {
+    var instance = this;
     if (_.isUndefined(this._root)) {
-        var instance = this;
         this._createRoot(new Point(0, 0, 0), this._minLeafSize, this._minLeafSize, this._minLeafSize, function () {
             instance.emit('rootInitialized');
             instance._root.emit('insertValue', value, function () {
@@ -62,7 +62,12 @@ Octree.prototype._insertValue = function (value, callback) {
         });
     }
     else {
-        this._root.emit('insertValue', value, callback);
+        this._root.emit('insertValue', value, function () {
+            instance.emit('valueInserted', value);
+            if (!_.isUndefined(callback)) {
+                callback();
+            }
+        });
     }
 };
 
@@ -73,6 +78,12 @@ Octree.prototype._query = function () {
 };
 
 Octree.prototype._grow = function (value, callback) {
+    var instance = this;
+    //TODO: Make this recursive
+    _.each(this._root.Children, function (child) {
+        instance.emit('leafRemoved', child);
+    });
+    instance.emit('leafRemoved', this._root);
     var xMin = this._root.BoundingBox.Corners[3].X;
     var yMin = this._root.BoundingBox.Corners[3].Y;
     var zMin = this._root.BoundingBox.Corners[3].Z;
@@ -104,7 +115,6 @@ Octree.prototype._grow = function (value, callback) {
     else if (growX && !growY && !growZ) {
         cornerIndex = 7;
     }
-    var instance = this;
     this._createRoot(this._root.BoundingBox.Corners[cornerIndex],
         this._root.BoundingBox.Width * 2, this._root.BoundingBox.Height * 2, this._root.BoundingBox.Depth * 2,
         function () {
